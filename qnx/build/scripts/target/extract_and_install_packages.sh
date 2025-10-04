@@ -22,17 +22,6 @@ for w in wheels:
 print("Done ->", site)
 PY
 
-# 新しい最小スタブを書き込み（上書き）
-mkdir -p "$SITE/numpy"
-
-# 2) 最小スタブ（import だけ通す）
-cat > "$SITE/numpy/__init__.py" <<'PY'
-__version__ = "0.0-qnxstub"
-class ndarray: pass
-def array(x,*a,**k): return x
-def asarray(x,*a,**k): return x
-PY
-
 # 1) bin配下の "python系" shebang を QNX 実体に統一
 grep -rIZ -l -E '^#!.*python([0-9](\.[0-9]+)?)?$|^#!.*python3' "$BASE/bin" \
 | xargs -0 -r sed -i '1 s|^#!.*|#!/system/bin/python3|'
@@ -44,11 +33,11 @@ grep -rIZ -l '.' "$BASE/bin" | xargs -0 -r sed -i 's/\r$//'
 find "$BASE/bin" -type f -exec chmod +x {} +
 
 # 4) 実行に必要な環境変数
-export PATH="/system/bin:$BASE/bin:$PATH"                 # python3 と ros2 を見つける
+export PATH="/system/bin:$BASE/bin:$PATH"
 export COLCON_CURRENT_PREFIX="$BASE"
-export COLCON_PYTHON_EXECUTABLE=/system/bin/python3       # ament/colcon が使う Python を固定
-export PYTHONPATH="$BASE/lib/python3.11/site-packages:$BASE/lib/python3.11/dist-packages:${PYTHONPATH:-}"
-export LD_LIBRARY_PATH="$BASE/lib:$BASE/lib64:${LD_LIBRARY_PATH:-}"
+export COLCON_PYTHON_EXECUTABLE=/system/bin/python3
+export PYTHONPATH="$BASE/usr/lib/python3.11/site-packages:$BASE/usr/lib/python3.11/dist-packages:$BASE/lib/python3.11/site-packages:$BASE/lib/python3.11/dist-packages:${PYTHONPATH:-}"
+export LD_LIBRARY_PATH="$BASE/usr/lib:$BASE/usr/lib64:$BASE/lib:$BASE/lib64:${LD_LIBRARY_PATH:-}"
 export AMENT_PREFIX_PATH="$BASE:${AMENT_PREFIX_PATH:-}"
 export CMAKE_PREFIX_PATH="$BASE:${CMAKE_PREFIX_PATH:-}"
 
