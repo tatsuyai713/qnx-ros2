@@ -47,7 +47,6 @@ RUN add-apt-repository ppa:deadsnakes/ppa -y && \
 	apt-get install -y \
 	python3.11-dev \
 	python3.11-venv \
-	python3.11-distutils \
 	rename
 
 # Install CMake 3.18
