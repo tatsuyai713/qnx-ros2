@@ -1,5 +1,5 @@
-# Download base image ubuntu 20.04
-FROM ubuntu:20.04
+# Download base image ubuntu 22.04
+FROM ubuntu:22.04
 
 # LABEL about the custom image
 LABEL maintainer="chachoi@blackberry.com"
@@ -10,51 +10,55 @@ LABEL description="Docker image for building ROS2 for QNX."
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Set locale
-RUN apt-get clean && apt update && apt install -y locales software-properties-common
-RUN locale-gen en_US en_US.UTF-8 && \
-	update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
-	export LANG=en_US.UTF-8
+RUN apt-get clean && apt update && apt install -y locales software-properties-common \
+ && locale-gen en_US en_US.UTF-8 \
+ && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
-# Add ROS2 apt repository
-RUN apt update && apt install -y curl gnupg2 lsb-release && \
-	curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - && \
-	sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
+# Add ROS2 apt repository (jammy)
+RUN apt update && apt install -y curl gnupg2 lsb-release \
+ && curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add - \
+ && sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
 
 # Build tools needed for building dependencies
 RUN apt update && apt install -y \
-	build-essential \
-  	git \
-  	libbullet-dev \
-  	python3-colcon-common-extensions \
-  	python3-flake8 \
-	python3-pip \
-	python3-pytest-cov \
-	python3-rosdep \
-	python3-setuptools \
-	python3-vcstool \
-	wget \
-	bc \
-	subversion \
-	autoconf \
-	libtool-bin \
-	libssl-dev \
-	zlib1g-dev \
-	rename
+  build-essential \
+  git \
+  libbullet-dev \
+  python3-colcon-common-extensions \
+  python3-flake8 \
+  python3-pip \
+  python3-pytest-cov \
+  python3-rosdep \
+  python3-setuptools \
+  python3-vcstool \
+  wget \
+  bc \
+  subversion \
+  autoconf \
+  libtool-bin \
+  libssl-dev \
+  zlib1g-dev \
+  rename
 
-# Install python 3.12
-RUN add-apt-repository ppa:deadsnakes/ppa -y && \
-	apt update && \
-	apt-get install -y \
-	python3.12-dev \
-	python3.12-venv \
-	python3.12-distutils \
-	rename
+# Enable universe & add deadsnakes, then install Python 3.11
+RUN add-apt-repository -y universe \
+ && add-apt-repository -y ppa:deadsnakes/ppa \
+ && apt update \
+ && apt-get install -y \
+      python3.11 \
+      python3.11-venv \
+      libpython3.11-dev \
+      rename \
+ && python3.11 -m ensurepip --upgrade \
+ && python3.11 -m pip install --no-cache-dir -U pip setuptools wheel
 
-# Install CMake 3.18
-RUN cd /opt && sudo wget https://cmake.org/files/v3.18/cmake-3.18.0-Linux-x86_64.sh && \
-	sudo mkdir /opt/cmake-3.18.0-Linux-x86_64 && \
-	yes | sudo sh cmake-3.18.0-Linux-x86_64.sh --prefix=/opt/cmake-3.18.0-Linux-x86_64 --skip-license && \
-	sudo ln -s /opt/cmake-3.18.0-Linux-x86_64/bin/cmake /usr/local/bin/cmake
+# Install CMake 3.18 (no sudo in Docker)
+RUN cd /opt \
+ && wget https://cmake.org/files/v3.18/cmake-3.18.0-Linux-x86_64.sh \
+ && mkdir /opt/cmake-3.18.0-Linux-x86_64 \
+ && yes | sh cmake-3.18.0-Linux-x86_64.sh --prefix=/opt/cmake-3.18.0-Linux-x86_64 --skip-license \
+ && ln -s /opt/cmake-3.18.0-Linux-x86_64/bin/cmake /usr/local/bin/cmake
 
 # Adding user
 ARG USER_NAME
@@ -62,42 +66,40 @@ ARG GROUP_NAME
 ARG USER_ID
 ARG GROUP_ID
 ARG QNX_SDP_VERSION
-
 ENV QNX_SDP_VERSION=$QNX_SDP_VERSION
 
-RUN groupadd --gid ${GROUP_ID} ${GROUP_NAME} && \
-	useradd --uid ${USER_ID} --gid ${GROUP_ID} --groups sudo --no-log-init --create-home ${USER_NAME} && \
-	echo "${USER_NAME}:password" | chpasswd
+RUN groupadd --gid ${GROUP_ID} ${GROUP_NAME} \
+ && useradd --uid ${USER_ID} --gid ${GROUP_ID} --groups sudo --no-log-init --create-home ${USER_NAME} \
+ && echo "${USER_NAME}:password" | chpasswd
+
 WORKDIR /home/${USER_NAME}
 USER ${USER_NAME}
 
-# Install standard ROS 2 development tools
-# Install pip packages needed for testing
-# Needed to build numpy from source
-RUN cd /home/${USER_NAME} && \
-	python3.12 -m venv env && \
-	. ./env/bin/activate && \
-	python3 -m pip install -U \
-	pip \
-	empy \
-	lark \
-	Cython \
-	wheel \
-	colcon-common-extensions \
-	vcstool \
-	catkin_pkg \
-	argcomplete \
-	flake8-blind-except \
-	flake8-builtins \
-	flake8-class-newline \
-	flake8-comprehensions \
-	flake8-deprecated \
-	flake8-docstrings \
-	flake8-import-order \
-	flake8-quotes \
-	pytest-repeat \
-	pytest-rerunfailures \
-	pytest
+# Python venv (3.11) and dev tools in user space
+RUN cd /home/${USER_NAME} \
+ && python3.11 -m venv env \
+ && . ./env/bin/activate \
+ && python3 -m pip install -U \
+      pip \
+      empy \
+      lark \
+      Cython \
+      wheel \
+      colcon-common-extensions \
+      vcstool \
+      catkin_pkg \
+      argcomplete \
+      flake8-blind-except \
+      flake8-builtins \
+      flake8-class-newline \
+      flake8-comprehensions \
+      flake8-deprecated \
+      flake8-docstrings \
+      flake8-import-order \
+      flake8-quotes \
+      pytest-repeat \
+      pytest-rerunfailures \
+      pytest
 
 # QNX SDP should be installed on system before creating an image
 # QNX SDP directory should be named qnx800 or qnx710
@@ -108,4 +110,4 @@ COPY --chown=${USER_NAME}:${GROUP_NAME} $QNX_SDP_VERSION /home/${USER_NAME}/$QNX
 COPY --chown=${USER_NAME}:${GROUP_NAME} ".welcome.bash" "/home/${USER_NAME}"
 RUN echo "source /home/${USER_NAME}/.welcome.bash\n" >> "/home/${USER_NAME}/.bashrc"
 
-CMD /bin/bash
+CMD ["/bin/bash"]
