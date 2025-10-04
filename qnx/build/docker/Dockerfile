@@ -76,8 +76,8 @@ WORKDIR /home/${USER_NAME}
 USER ${USER_NAME}
 
 # --- IMPORTANT ---
-# Create Python 3.11 venv and pre-pin build tools for numpy_vendor (compat mode)
-# Cython<3 / setuptools<60 / wheel<0.41 / pip<24.3 first, then the rest.
+# Create Python 3.11 venv and pre-pin build tools for numpy_vendor & rosidl (compat mode)
+# Cython<3 / setuptools<60 / wheel<0.41 / pip<24.3 / empy==3.3.4
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN cd /home/${USER_NAME} \
  && python3.11 -m venv env \
@@ -87,8 +87,8 @@ RUN cd /home/${USER_NAME} \
       "setuptools<60" \
       "wheel<0.41" \
       "Cython<3" \
+      "empy==3.3.4" \
  && python -m pip install -U \
-      empy \
       lark \
       colcon-common-extensions \
       vcstool \
@@ -105,6 +105,7 @@ RUN cd /home/${USER_NAME} \
       pytest-repeat \
       pytest-rerunfailures \
       pytest
+
 
 # QNX SDP should be installed on system before creating an image
 # QNX SDP directory should be named qnx800 or qnx710
