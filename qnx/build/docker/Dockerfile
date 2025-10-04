@@ -41,13 +41,13 @@ RUN apt update && apt install -y \
 	zlib1g-dev \
 	rename
 
-# Install python 3.11
+# Install python 3.12
 RUN add-apt-repository ppa:deadsnakes/ppa -y && \
 	apt update && \
 	apt-get install -y \
-	python3.11 \
-	python3.11-venv \
-	libpython3.11-dev \
+	python3.12-dev \
+	python3.12-venv \
+	python3.12-distutils \
 	rename
 
 # Install CMake 3.18
@@ -75,7 +75,7 @@ USER ${USER_NAME}
 # Install pip packages needed for testing
 # Needed to build numpy from source
 RUN cd /home/${USER_NAME} && \
-	python3.11 -m venv env && \
+	python3.12 -m venv env && \
 	. ./env/bin/activate && \
 	python3 -m pip install -U \
 	pip \
