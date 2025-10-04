@@ -5,7 +5,7 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 start=$(date +%s.%N)
 
 build(){
-    
+
     if [ "${CPU}" == "aarch64" ]; then
         CPUVARDIR=aarch64le
         CPUVAR=aarch64le
@@ -61,9 +61,12 @@ build(){
     cp -r ./install/${CPUVARDIR} ./opt/ros/humble
 
     # Patch the python version for all scripts generated with ament_python_install_package
+    # 対象: 1行目が '#!/usr/bin/python3.X' または '#!/usr/bin/env python3.X' のファイル
+    # 置換: 1行目を '#!/usr/bin/python3' に統一（NULL区切りで空/特殊文字にも安全、ヒット0件なら何もしない）
     echo "Patching Python scripts..."
-    grep -rinl "\#\!/usr/bin/python3." ./opt/ros/humble | xargs -d '\n' sed -i '1 i #!/usr/bin/python3'
-    grep -rinl "\#\!/usr/bin/python3." ./opt/ros/humble | xargs -d '\n' sed -i '2 d'
+    grep -rIZ -l -E '^#!\s*/usr/bin/(env[[:space:]]+)?python3\.[0-9]+' ./opt/ros/humble \
+    | xargs -0 -r sed -i \
+        '1 s|^#!\s*/usr/bin/\(env[[:space:]]\+\)\?python3\.[0-9]\+|#!/usr/bin/python3|'
     echo "done."
 
     tar -czf ros2_humble.tar.gz ./opt/ros/humble
@@ -91,6 +94,6 @@ else
 fi
 
 duration=$(echo "$(date +%s.%N) - $start" | bc)
-execution_time=`printf "%.2f seconds" $duration`
+execution_time=$(printf "%.2f seconds" "$duration")
 echo "Build Successful. Build time: $execution_time"
 exit 0
