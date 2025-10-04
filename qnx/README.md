@@ -14,10 +14,10 @@ Don't forget to source qnxsdp-env.sh in your SDP.
 
 ```bash
 # Set QNX_SDP_VERSION to be qnx800 for SDP 8.0 or qnx710 for SDP 7.1
-export QNX_SDP_VERSION=qnx800
+export QNX_SDP_VERSION=qnx803
 
 # source qnxsdp-env.sh in your SDP
-source <path-to-qnxsdp-env.sh>/qnxsdp-env.sh
+source ~/qnx803/qnxsdp-env.sh
 
 # Create a workspace
 mkdir -p ~/ros2_workspace && cd ~/ros2_workspace
@@ -28,7 +28,8 @@ git checkout 792c30ac6226e95ba4e08ded16bcccb011bd9f76
 cd -
 
 # Clone ros2
-git clone -b qnx-sdp8-humble-release https://github.com/qnx/ros2
+git clone -b qnx-sdp8-humble-release https://github.com/tatsuyai713/qnx-ros2
+mv qnx-ros2 ros2
 
 # Build the Docker image
 cd  ~/ros2_workspace/ros2/qnx/build/docker
@@ -56,6 +57,7 @@ JLEVEL=4 make  -C qnx/build install
 
 # Build ros2
 cd ~/ros2_workspace/ros2
+export CPU=aarch64
 ./qnx/build/scripts/build-ros2.sh
 ```
 
