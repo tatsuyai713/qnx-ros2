@@ -75,16 +75,21 @@ RUN groupadd --gid ${GROUP_ID} ${GROUP_NAME} \
 WORKDIR /home/${USER_NAME}
 USER ${USER_NAME}
 
-# Python venv (3.11) and dev tools in user space
+# --- IMPORTANT ---
+# Create Python 3.11 venv and pre-pin build tools for numpy_vendor (compat mode)
+# Cython<3 / setuptools<60 / wheel<0.41 / pip<24.3 first, then the rest.
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN cd /home/${USER_NAME} \
  && python3.11 -m venv env \
  && . ./env/bin/activate \
- && python3 -m pip install -U \
-      pip \
+ && python -m pip install -U \
+      "pip<24.3" \
+      "setuptools<60" \
+      "wheel<0.41" \
+      "Cython<3" \
+ && python -m pip install -U \
       empy \
       lark \
-      Cython \
-      wheel \
       colcon-common-extensions \
       vcstool \
       catkin_pkg \
@@ -108,6 +113,6 @@ COPY --chown=${USER_NAME}:${GROUP_NAME} $QNX_SDP_VERSION /home/${USER_NAME}/$QNX
 
 # Welcome Message
 COPY --chown=${USER_NAME}:${GROUP_NAME} ".welcome.bash" "/home/${USER_NAME}"
-RUN echo "source /home/${USER_NAME}/.welcome.bash\n" >> "/home/${USER_NAME}/.bashrc"
+RUN echo "source /home/${USER_NAME}/.welcome.bash" >> "/home/${USER_NAME}/.bashrc"
 
 CMD ["/bin/bash"]
