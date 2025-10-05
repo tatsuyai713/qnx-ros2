@@ -15,6 +15,7 @@ Don't forget to source qnxsdp-env.sh in your SDP.
 ```bash
 # Set QNX_SDP_VERSION to be qnx800 for SDP 8.0 or qnx710 for SDP 7.1
 export QNX_SDP_VERSION=qnx803
+export TARGET_IP=192.168.23.251
 
 # source qnxsdp-env.sh in your SDP
 source ~/qnx803/qnxsdp-env.sh
@@ -64,7 +65,7 @@ export CPU=aarch64
 
 # Transfer the built files to your host machine
 cd ~/ros2_workspace/ros2/qnx/build
-scp $QNX_TARGET/$CPUVARDIR/ros2_humble.tar.gz root@target_ip:/data
+scp $QNX_TARGET/$CPUVARDIR/ros2_humble.tar.gz root@$TARGET_IP:/data
 ```
 ## Target setup
 On the target, extract the transferred tarball and source the setup script.
@@ -76,7 +77,7 @@ cd /data
 ```
 
 You can now run ROS2 nodes on the QNX target.
-For example, run the turtlesim node:
+For example, run the demo_nodes_cpp node:
 
 ```bash
 ros2 launch demo_nodes_cpp talker_listener.launch.py
