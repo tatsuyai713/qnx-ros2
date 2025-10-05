@@ -64,7 +64,7 @@ export CPU=aarch64
 
 # Transfer the built files to your host machine
 cd ~/ros2_workspace/ros2/qnx/build
-scp $QNX_TARGET/$CPUVARDIR/ros2_humble.tar.gz root@host_ip:/data
+scp $QNX_TARGET/$CPUVARDIR/ros2_humble.tar.gz root@target_ip:/data
 ```
 ## Target setup
 On the target, extract the transferred tarball and source the setup script.
