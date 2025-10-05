@@ -37,7 +37,9 @@ cd  ~/ros2_workspace/ros2/qnx/build/docker
 
 # Create a Docker container using the built image
 ./docker-create-container.sh
+```
 
+```bash
 # Once you're in the image, set up environment variables
 . ./env/bin/activate
 . ./$QNX_SDP_VERSION/qnxsdp-env.sh
@@ -59,77 +61,23 @@ JLEVEL=4 make  -C qnx/build install
 cd ~/ros2_workspace/ros2
 export CPU=aarch64
 ./qnx/build/scripts/build-ros2.sh
+
+# Transfer the built files to your host machine
+cd ~/ros2_workspace/ros2/qnx/build
+scp $QNX_TARGET/$CPUVARDIR/ros2_humble.tar.gz root@host_ip:/data
 ```
-
-After the build completes, ros2_humble.tar.gz will be created at $QNX_TARGET/$CPUVARDIR/ros2_humble.tar.gz
-
-## Build on host without using Docker
-
-Don't forget to source qnxsdp-env.sh in your SDP.
+## Target setup
+On the target, extract the transferred tarball and source the setup script.
 
 ```bash
-# Set QNX_SDP_VERSION to be qnx800 for SDP 8.0 or qnx710 for SDP 7.1
-export QNX_SDP_VERSION=qnx800
+cd /data
+./extract_and_install_packages.sh
+. ./set_env.sh
+```
 
-# Create a workspace
-mkdir -p ~/ros2_workspace && cd ~/ros2_workspace
+You can now run ROS2 nodes on the QNX target.
+For example, run the turtlesim node:
 
-# Build and install googletest
-git clone https://github.com/qnx/googletest && cd googletest
-git checkout 792c30ac6226e95ba4e08ded16bcccb011bd9f76
-cd -
-
-# Clone ros2
-git clone -b qnx-sdp8-humble-release https://github.com/qnx/ros2 && cd ros2
-
-# Install python 3.11
-sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt update
-sudo apt-get install -y python3.11-dev python3.11-venv python3.11-distutils software-properties-common rename
-
-# Create a python 3.11 virtual environment
-python3.11 -m venv env
-source env/bin/activate
-
-# Install required python packages
-pip install -U \
-  pip \
-  empy \
-  lark \
-  Cython \
-  wheel \
-  colcon-common-extensions \
-  vcstool \
-  catkin_pkg \
-  argcomplete \
-  flake8-blind-except \
-  flake8-builtins \
-  flake8-class-newline \
-  flake8-comprehensions \
-  flake8-deprecated \
-  flake8-docstrings \
-  flake8-import-order \
-  flake8-quotes \
-  pytest-repeat \
-  pytest-rerunfailures \
-  pytest
-
-# Import ros2 packages
-mkdir -p src
-vcs import src < ros2.repos
-
-# Run scripts to ignore some packages and apply QNX patches
-./qnx/build/scripts/colcon-ignore.sh
-./qnx/build/scripts/patch.sh
-
-# Set LD_PRELOAD to the host libzstd.so for x86_64 SDP 7.1 builds
-export LD_PRELOAD=$LD_PRELOAD:/usr/lib/x86_64-linux-gnu/libzstd.so
-
-# Build and install googletest
-cd ~/ros2_workspace/googletest
-JLEVEL=4 make -C qnx/build install
-
-# Build ros2
-cd ~/ros2_workspace/ros2
-./qnx/build/scripts/build-ros2.sh
+```bash
+ros2 launch demo_nodes_cpp talker_listener.launch.py
 ```
